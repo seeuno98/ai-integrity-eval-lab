@@ -1,0 +1,39 @@
+model:
+  name: "distilbert-base-uncased"
+  num_labels: 2
+  max_length: 128
+
+training:
+  output_dir: "outputs/checkpoints"
+  num_train_epochs: 3
+  per_device_train_batch_size: 16
+  per_device_eval_batch_size: 32
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  lr_scheduler_type: "linear"
+  evaluation_strategy: "epoch"
+  save_strategy: "epoch"
+  load_best_model_at_end: true
+  metric_for_best_model: "f1"
+  greater_is_better: true
+  logging_steps: 50
+  seed: 42
+  fp16: false
+  dataloader_num_workers: 0
+
+data:
+  dataset_name: "lmsys/toxic-chat"
+  dataset_config: "toxicchat0124"
+  text_field: "user_input"
+  label_field: "toxicity"
+  val_split_ratio: 0.1
+  test_split_ratio: 0.1
+  max_train_samples: null
+  max_eval_samples: null
+
+artifacts:
+  model_dir: "outputs/model"
+  metrics_dir: "outputs/metrics"
+  figures_dir: "outputs/figures"
+  misclassified_path: "outputs/metrics/misclassified.csv"
