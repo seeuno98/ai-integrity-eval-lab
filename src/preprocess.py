@@ -1,7 +1,9 @@
-"""Preprocessing: cleaning, label mapping, and tokenization."""
+"""Preprocessing: text normalization, cleaning, label mapping, and tokenization."""
 
 from __future__ import annotations
 
+import re
+import unicodedata
 from typing import Any
 
 from datasets import DatasetDict
@@ -20,6 +22,29 @@ ID2LABEL: dict[int, str] = {0: "non-toxic", 1: "toxic"}
 LABEL2ID: dict[str, int] = {"non-toxic": 0, "toxic": 1}
 
 
+def normalize_text(text: str) -> str:
+    """Apply lightweight Unicode and whitespace normalization.
+
+    Normalization steps:
+    - Unicode NFKC (collapses compatibility characters, e.g. full-width letters)
+    - Collapse all internal whitespace sequences (spaces, tabs, newlines) to a single space
+    - Strip leading/trailing whitespace
+
+    Deliberate non-operations:
+    - Punctuation is preserved (it carries moderation signal)
+    - Casing is preserved (DistilBERT's uncased tokenizer handles lowercasing internally)
+
+    Args:
+        text: Raw input string.
+
+    Returns:
+        Lightly normalised string.
+    """
+    text = unicodedata.normalize("NFKC", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
 def _clean_split(dataset_dict: DatasetDict, text_field: str, label_field: str) -> DatasetDict:
     """Remove rows where text or label is null/empty.
 
@@ -31,8 +56,7 @@ def _clean_split(dataset_dict: DatasetDict, text_field: str, label_field: str) -
     Returns:
         Cleaned DatasetDict.
     """
-
-    # Validate schema once using train split (or any split)
+    # Validate schema once using the first available split
     sample_split = next(iter(dataset_dict.values()))
 
     if text_field not in sample_split.column_names:
@@ -120,21 +144,35 @@ def tokenize_dataset(
 
     Steps performed:
     1. Clean null rows.
-    2. Map labels to binary integers under the ``labels`` column.
-    3. Tokenize with padding and truncation.
-    4. Remove raw text and any unused columns.
-    5. Set format to ``torch``.
+    2. Optionally apply text normalization (controlled by ``data_cfg.normalize_text``).
+    3. Map labels to binary integers under the ``labels`` column.
+    4. Tokenize with padding and truncation.
+    5. Remove raw text and any unused columns.
+    6. Set format to ``torch``.
 
     Args:
         dataset_dict: Raw DatasetDict loaded by :mod:`src.data`.
         tokenizer: Pre-loaded tokenizer.
-        data_cfg: Data configuration (field names, etc.).
+        data_cfg: Data configuration (field names, normalization flag, etc.).
         model_cfg: Model configuration (max_length).
 
     Returns:
         Fully preprocessed DatasetDict ready for the Trainer.
     """
     dataset_dict = _clean_split(dataset_dict, data_cfg.text_field, data_cfg.label_field)
+
+    if data_cfg.normalize_text:
+        logger.info("Applying text normalization (NFKC + whitespace collapse) ...")
+
+        def _normalize_batch(batch: dict[str, list]) -> dict[str, list]:
+            return {data_cfg.text_field: [normalize_text(t) for t in batch[data_cfg.text_field]]}
+
+        normalized: dict[str, Any] = {}
+        for split, ds in dataset_dict.items():
+            ds = ds.map(_normalize_batch, batched=True, desc=f"Normalizing [{split}]")
+            normalized[split] = ds
+        dataset_dict = DatasetDict(normalized)
+
     dataset_dict = _map_labels(dataset_dict, data_cfg.label_field)
 
     def _tokenize(batch: dict[str, list]) -> dict[str, list]:

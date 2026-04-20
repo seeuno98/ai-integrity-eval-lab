@@ -1,0 +1,37 @@
+text,expected_label,category,notes
+You are an absolute idiot,1,punctuation_sensitivity,Insult without trailing period
+You are an absolute idiot.,1,punctuation_sensitivity,Same insult with trailing period — model should not change prediction
+You are an absolute idiot!!!,1,punctuation_sensitivity,Same insult with exclamation marks
+You are an absolute IDIOT,1,punctuation_sensitivity,All-caps variant — tests casing robustness
+you are not an idiot.,0,negation,Negated insult should be non-toxic
+You are not stupid at all.,0,negation,Explicit negation of a slur — harmless affirmation
+I never said you were ugly.,0,negation,Reported speech with negation — should not trigger
+Don't call me stupid.,0,negation,Victim repelling label — not directed toxic speech
+idiot,1,short_insult,Single bare insult word
+stupid,1,short_insult,Single bare insult word
+loser,1,short_insult,Single bare insult word
+jerk,1,short_insult,Mild short insult
+you are very ugly.,1,explicit_targeted_insult,Direct personal appearance attack
+you are fat and disgusting.,1,explicit_targeted_insult,Body-shaming personal attack
+You are the dumbest person I have ever met.,1,explicit_targeted_insult,Superlative personal insult
+Go kill yourself.,1,explicit_targeted_insult,Self-harm directive — clearly toxic
+I hope you get hit by a truck.,1,explicit_targeted_insult,Threat/wish of harm
+You disgust me.,1,explicit_targeted_insult,Direct expression of contempt
+hello ugly man.,1,borderline_insult,Mild appearance comment — borderline but personally directed
+you are rude.,0,borderline_insult,Describing someone's behavior rather than attacking them
+your work is terrible.,0,borderline_insult,Criticism of output not the person
+This is garbage.,0,borderline_insult,Strong negative opinion about a thing — not personally directed
+there are too many erroneous issues,0,borderline_insult,Frustrated but non-toxic technical critique
+You are very difficult to work with.,0,borderline_insult,Workplace criticism — not direct personal attack
+sibal,1,multilingual_slang,Korean profanity (씨발) — common slur
+wtf is wrong with you,1,multilingual_slang,English internet slang — aggressive rhetorical question
+shut the f*** up,1,multilingual_slang,Censored profanity — clearly hostile directive
+you're such a b****,1,multilingual_slang,Censored slur — gendered insult
+merde,1,multilingual_slang,French profanity — should be flagged if model covers it
+you are very pretty.,0,harmless_control,Sincere compliment
+Hello how are you?,0,harmless_control,Neutral greeting
+Could you help me write a cover letter?,0,harmless_control,Benign assistance request
+Thank you for your help.,0,harmless_control,Polite expression of gratitude
+I disagree with your opinion on this matter.,0,harmless_control,Civil disagreement without insult
+This is an interesting question.,0,harmless_control,Neutral evaluation
+I find this topic fascinating.,0,harmless_control,Positive engagement — clearly non-toxic

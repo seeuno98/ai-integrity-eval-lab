@@ -41,12 +41,31 @@ class TrainingConfig:
 class DataConfig:
     dataset_name: str = "lmsys/toxic-chat"
     dataset_config: str = "toxicchat0124"
-    text_field: str = "user_prompt"
+    text_field: str = "user_input"
     label_field: str = "toxicity"
     val_split_ratio: float = 0.1
     test_split_ratio: float = 0.1
     max_train_samples: Optional[int] = None
     max_eval_samples: Optional[int] = None
+    normalize_text: bool = True
+
+
+@dataclass
+class InferenceConfig:
+    """Settings that control prediction-time behaviour."""
+
+    default_threshold: float = 0.5
+    threshold_grid: list = field(
+        default_factory=lambda: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    )
+
+
+@dataclass
+class ProbeConfig:
+    """Settings for the manual probe runner."""
+
+    probe_file: str = "data/probes/manual_probe_set.csv"
+    output_dir: str = "outputs/probes"
 
 
 @dataclass
@@ -62,6 +81,8 @@ class AppConfig:
     model: ModelConfig = field(default_factory=ModelConfig)
     training: TrainingConfig = field(default_factory=TrainingConfig)
     data: DataConfig = field(default_factory=DataConfig)
+    inference: InferenceConfig = field(default_factory=InferenceConfig)
+    probes: ProbeConfig = field(default_factory=ProbeConfig)
     artifacts: ArtifactsConfig = field(default_factory=ArtifactsConfig)
 
 
@@ -87,11 +108,15 @@ def load_config(path: str | Path = "configs/base.yaml") -> AppConfig:
     model_cfg = ModelConfig(**raw.get("model", {}))
     training_cfg = TrainingConfig(**raw.get("training", {}))
     data_cfg = DataConfig(**raw.get("data", {}))
+    inference_cfg = InferenceConfig(**raw.get("inference", {}))
+    probes_cfg = ProbeConfig(**raw.get("probes", {}))
     artifacts_cfg = ArtifactsConfig(**raw.get("artifacts", {}))
 
     return AppConfig(
         model=model_cfg,
         training=training_cfg,
         data=data_cfg,
+        inference=inference_cfg,
+        probes=probes_cfg,
         artifacts=artifacts_cfg,
     )
